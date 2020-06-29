@@ -1,7 +1,8 @@
 {
     "name": "giolaza/database",
     "type": "library",
-    "version": "1.0.0",
+    "version": "1.0.1",
+    "description": "SQL DB library",
     "authors": [
         {
             "name": "Giorgi Lazashvili",
@@ -17,5 +18,7 @@
         }
     },
     "license": "MIT",
-    "description": "SQL DB library"
+    "require": {
+        "giolaza/logger": "*"
+    }
 }

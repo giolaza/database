@@ -44,9 +44,10 @@
 
 namespace GioLaza\Database;
 
-use App\Sys\Logs as Logs;
 use GioLaza\Database\PDOPrepared as PDOPrepared;
+use GioLaza\Logger\Log as Log;
 use \Exception;
+use PDO;
 
 /**
  * Class SqlDB
@@ -108,7 +109,7 @@ class SqlDB
      * @param $sql_pass
      * @param $sql_db_name
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function connect($sql_host, $sql_user, $sql_pass, $sql_db_name)
     {
@@ -121,20 +122,20 @@ class SqlDB
      * @param $sql_pass
      * @param $sql_db_name
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function db_open($sql_host, $sql_user, $sql_pass, $sql_db_name)
     {
         if (class_exists(self::DB_Driver)) {
             try {
                 if (self::DB_Driver === 'PDO') {
-                    $this->connect = new \PDO('mysql:host=' . $sql_host . ';dbname=' . $sql_db_name . ';charset=UTF8', $sql_user, $sql_pass, array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_PERSISTENT => false));
+                    $this->connect = new PDO('mysql:host=' . $sql_host . ';dbname=' . $sql_db_name . ';charset=UTF8', $sql_user, $sql_pass, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_PERSISTENT => false));
                 } else {
                     $this->logErr('db_open check driver: ' . lang('connection type not supported by engine'));
                     $this->connect = null;
                     return false;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logErr('db_open catch: ' . $e->getMessage());
                 $this->connect = null;
                 return false;
@@ -194,7 +195,7 @@ class SqlDB
     /**
      * @param string $query
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_only($query = '')
     {
@@ -206,7 +207,7 @@ class SqlDB
 
         try {
             $result = $this->connect->query($this->query);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logErr('do_only catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
 
             return false;
@@ -224,7 +225,7 @@ class SqlDB
     /**
      * @param string $query
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_one($query = '')
     {
@@ -236,7 +237,7 @@ class SqlDB
 
         try {
             $result = $this->connect->query($this->query);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logErr('do_one catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
 
             return array();
@@ -255,7 +256,7 @@ class SqlDB
     /**
      * @param string $query
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_all($query = '')
     {
@@ -267,7 +268,7 @@ class SqlDB
 
         try {
             $result = $this->connect->query($this->query);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logErr('do_all catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
 
             return array();
@@ -287,7 +288,7 @@ class SqlDB
     /**
      * @param string $query
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_multi($query = '')
     {
@@ -310,7 +311,7 @@ class SqlDB
      * @param string $query
      * @param string $key
      * @return mixed|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_fromArray($query = '', $key = '')
     {
@@ -339,7 +340,7 @@ class SqlDB
      * @param string $where
      * @param array $like
      * @return bool|int
-     * @throws \Exception
+     * @throws Exception
      */
     public function do_count($table = '', $where = '', $like = array())
     {
@@ -415,7 +416,7 @@ class SqlDB
 
     /**
      * @return int
-     * @throws \Exception
+     * @throws Exception
      */
     public function lastInsertId()
     {
@@ -424,7 +425,7 @@ class SqlDB
         }
         try {
             return $this->connect->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logErr('lastInsertId catch:<br>' . PHP_EOL . '--message: ' . $e->getMessage());
             return 0;
         }
@@ -438,7 +439,7 @@ class SqlDB
     /**
      * @param $query
      * @return PDOPrepared|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepare($query)
     {
@@ -460,7 +461,7 @@ class SqlDB
      * @param array $array
      * @param int $limit
      * @return array|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareAndSelect($table, $where, $array = [], $limit = 0)
     {
@@ -513,7 +514,7 @@ class SqlDB
      * @param array $array
      * @param int $limit
      * @return array|mixed
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareAndSelectOne($table, $where, $array = [], $limit = 1)
     {
@@ -530,7 +531,7 @@ class SqlDB
      * @param $table
      * @param $data
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareAndInsert($table, $data)
     {
@@ -579,7 +580,7 @@ class SqlDB
      * @param array $whereNot
      * @param int $limit
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareAndUpdate($table, $data, $where = [], $whereNot = [], $limit = 1)
     {
@@ -665,7 +666,7 @@ class SqlDB
      * @param $table
      * @param $array
      * @return PDOPrepared|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareInsert($table, $array)
     {
@@ -712,7 +713,7 @@ class SqlDB
      * @param $array
      * @param $where
      * @return PDOPrepared|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function prepareUpdate($table, $array, $where)
     {
@@ -759,7 +760,7 @@ class SqlDB
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     protected function checkAll()
     {
@@ -796,9 +797,9 @@ class SqlDB
                 $fetchDataResult = array();
 
                 if ($oneOnly) {
-                    $fetchDataResult = $fetchData->fetch(\PDO::FETCH_ASSOC);
+                    $fetchDataResult = $fetchData->fetch(PDO::FETCH_ASSOC);
                 } else {
-                    $fetchDataResult = $fetchData->fetchAll(\PDO::FETCH_ASSOC);
+                    $fetchDataResult = $fetchData->fetchAll(PDO::FETCH_ASSOC);
                 }
 
                 if (!$fetchDataResult) return array();
@@ -812,15 +813,17 @@ class SqlDB
 
     /**
      * @param $string
-     * @throws \Exception
+     * @throws Exception
      */
     protected function logErr($string)
     {
         try {
-            Logs::logError($string, self::LOG_FILE);
-
+            Log::logError($string, self::LOG_FILE);
         } catch (Exception $e) {
+            return;
         }
+
+        return;
     }
 
     /*** NOT PUBLIC FUNCTIONS */
