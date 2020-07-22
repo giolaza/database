@@ -45,17 +45,17 @@ class PDOPrepared extends sqlDB
      */
     public function prepare($query)
     {
-
+        $this->query = $query;
         try {
-            $this->prepared = $this->connect->prepare($query);
+            $this->prepared = $this->connect->prepare($this->query);
         } catch (\Exception $e) {
-            $this->logErr('PDO prepare catch:<br>' . PHP_EOL . '--query: ' . $query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
+            $this->logErr('PDO prepare catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
 
             return;
         }
 
         if (!$this->prepared) {
-            $this->logErr('PDO prepare not ready:<br>' . PHP_EOL . '--query: ' . $query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), 1));
+            $this->logErr('PDO prepare not ready:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), 1));
         }
 
     }

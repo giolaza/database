@@ -393,8 +393,8 @@ class SqlDB
                 else $whereStr = $tmp;
             }
 
-            $query = 'SELECT count(*) c from ' . $table . ' WHERE ' . $whereStr;
-            $PDO_query = $this->prepare($query);
+            $this->query = 'SELECT count(*) c from ' . $table . ' WHERE ' . $whereStr;
+            $PDO_query = $this->prepare($this->query);
             $result = $PDO_query->execute_one($findArray);
 
             if (isset($result['c']))
@@ -406,8 +406,8 @@ class SqlDB
         } else {
             $whereStr = $where;
 
-            $query = 'SELECT count(*) c from ' . $table . ' ' . ($where ? ' WHERE ' . $whereStr : '');
-            $result = $this->do_one($query);
+            $this->query = 'SELECT count(*) c from ' . $table . ' ' . ($where ? ' WHERE ' . $whereStr : '');
+            $result = $this->do_one($this->query);
             return intval($result['c']);
         }
 
@@ -495,15 +495,15 @@ class SqlDB
             }
         }
 
-        $query = 'SELECT ' . $structureStr . ' FROM `' . $table . '` where ' . implode(' and ', $whereStructure);
+        $this->query = 'SELECT ' . $structureStr . ' FROM `' . $table . '` where ' . implode(' and ', $whereStructure);
 
         if ($limit > 0) {
-            $query .= ' LIMIT ' . $limit;
+            $this->query .= ' LIMIT ' . $limit;
         }
 
         $PDO_prepare = new PDOPrepared;
         $PDO_prepare->connect = $this->connect;
-        $PDO_prepare->prepare($query);
+        $PDO_prepare->prepare($this->query);
 
         return $PDO_prepare->execute($where);
     }
@@ -564,11 +564,11 @@ class SqlDB
             }
         }
 
-        $query = 'INSERT INTO `' . $table . '`(' . implode(',', $structure) . ') VALUES (' . implode(',', $values) . ')';
+        $this->query = 'INSERT INTO `' . $table . '`(' . implode(',', $structure) . ') VALUES (' . implode(',', $values) . ')';
 
         $PDO_prepare = new PDOPrepared;
         $PDO_prepare->connect = $this->connect;
-        $PDO_prepare->prepare($query);
+        $PDO_prepare->prepare($this->query);
 
         return $PDO_prepare->execute_only($data);
     }
@@ -648,16 +648,16 @@ class SqlDB
         }
 
 
-        $query = 'UPDATE `' . $table . '` SET ' . implode(',', $structure) . ' ';
-        $query .= 'WHERE ' . implode(' AND ', $whereStructure) . ' ';
+        $this->query = 'UPDATE `' . $table . '` SET ' . implode(',', $structure) . ' ';
+        $this->query .= 'WHERE ' . implode(' AND ', $whereStructure) . ' ';
         if ($limit) {
-            $query .= 'LIMIT ' . $limit;
+            $this->query .= 'LIMIT ' . $limit;
         }
 
         $data = array_merge($data, $whereWithPrefix, $whereNotWithPrefix);
         $PDO_prepare = new PDOPrepared;
         $PDO_prepare->connect = $this->connect;
-        $PDO_prepare->prepare($query);
+        $PDO_prepare->prepare($this->query);
 
         return $PDO_prepare->execute_only($data);
     }
@@ -699,11 +699,11 @@ class SqlDB
             }
         }
 
-        $query = 'INSERT INTO `' . $table . '`(' . implode(',', $structure) . ') VALUES (' . implode(',', $values) . ')';
+        $this->query = 'INSERT INTO `' . $table . '`(' . implode(',', $structure) . ') VALUES (' . implode(',', $values) . ')';
 
         $result = new PDOPrepared;
         $result->connect = $this->connect;
-        $result->prepare($query);
+        $result->prepare($this->query);
 
         return $result;
     }
@@ -744,11 +744,11 @@ class SqlDB
             }
         }
 
-        $query = 'UPDATE `' . $table . '` set ' . implode(',', $structure) . ' where ' . $where . '';
+        $this->query = 'UPDATE `' . $table . '` set ' . implode(',', $structure) . ' where ' . $where . '';
 
         $result = new PDOPrepared;
         $result->connect = $this->connect;
-        $result->prepare($query);
+        $result->prepare($this->query);
 
         return $result;
     }
@@ -767,7 +767,7 @@ class SqlDB
         $localERR = '';
         $this->query = trim($this->query);
         if (strlen($this->query) == 0) {
-            $localERR = lang('empty key detected');
+            $localERR = lang('empty query detected');
         } else if ($this->connect == null) {
             $localERR = lang('connect is null');
         }
