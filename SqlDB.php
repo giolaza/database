@@ -287,6 +287,31 @@ class SqlDB
 
     /**
      * @param string $query
+     * @param string $key
+     * @return array
+     * @throws Exception
+     */
+    public function do_allById($query = '', $key = 'id')
+    {
+        $this->query = $query;
+        if (!$this->checkAll()) {
+            return array();
+        }
+
+        $result = [];
+
+        $raw = $this->do_all($query);
+
+        foreach ($raw as $row) {
+            $id = $row[$key];
+            $result[$id] = $row;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $query
      * @return bool
      * @throws Exception
      */
