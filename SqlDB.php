@@ -2,44 +2,10 @@
 /**
  * SqlDB.php
  *
- * @category   DB
- * @package    GL
+ * @category   Database
+ * @package    GioLaza
  * @author     Giorgi Lazashvili <giolaza@gmail.com>
- * @version    2 (26 MAY 2018)
  *
- ****************************************************************************************************
- *
- * --REQUIREMENTS--
- *
- * const DB_Driver='PDO'; - "PDO" for pdo connection, another connection is not supported
- * const LOG_FILE='engine.DBErros.php'; - file to save errors
- *
- *
- * --METHODS--
- * (object) sqlDB->connect($sql_host,$sql_user,$sql_pass,$sql_db_name) - db connection open, calls db_open
- * (object) sqlDB->db_open($sql_host,$sql_user,$sql_pass,$sql_db_name) - db connection open
- * (void) sqlDB->db_close() - close connection
- * (boolean) sqlDB->check_connection() - check connection
- * (boolean) sqlDB->do_only($query) - sql run only without checking output, recommended for UPDATE, DELETE, etc...
- * (array) sqlDB->do_one($query) - recommended for SELECT ... LIMIT 1, RESULT -  $result['key1'],$result['key2'],$result['key3']...
- * (array) sqlDB->do_all($query) - recommended for SELECT ..., RESULT -
- * $result[0]['key1'],$result[0]['key2'],$result[0]['key3']...
- * $result[1]['key1'],$result[1]['key2'],$result[1]['key3']...
- * ...
- * (mixed) sqlDB->do_fromArray($query,$key) recommended for SELECT ... LIMIT 1, return $result[$key] , uses sqlDB->do_one($query)
- * (int) sqlDB->do_count($table,$where='',$like=array()) recommended for SELECT count(*) from table where....  return intval(count) , uses PDO for prepare is where is ARRAY
- * or simple query if is string or nothing.
- * $where can be null;
- * $like is array using only in PDO query,in array is structure name
- * that will be used with LIKE %x% operators
- * (boolean) sqlDB->do_multi($query) recommended for multi query UPDATE1 ... LIMIT 1;UPDATE2 ... LIMIT 1; if multi query not returns error result will be true;
- *
- *
- *
- * (object - PDOPrepared) sqlDB->prepare($query) - creates new PDO object, ready for execute
- * (object - PDOPrepared) sqlDB->prepareInsert($table, $structureArray=[using this value in foreach]) - creates new PDO object with INSERT INTO table (str) VALUES (str)
- * (object - PDOPrepared) sqlDB->prepareUpdate($table, $structureArray=[using this value in foreach], $whereString) - creates new PDO object - creates new PDO object with UPDATES table set str=:str where string
- ****************************************************************************************************
  */
 
 namespace GioLaza\Database;
@@ -85,12 +51,12 @@ class SqlDB
 
     public function __construct()
     {
-        if (!defined('engineShowErrors')) {
-            define('engineShowErrors', false, 1);
+        if (!defined('GIOLAZA_SHOW_ERRORS')) {
+            define('GIOLAZA_SHOW_ERRORS', false, 1);
         }
 
-        if (!defined('engineSaveErrors')) {
-            define('engineSaveErrors', true, 1);
+        if (!defined('GIOLAZA_SAVE_ERRORS')) {
+            define('GIOLAZA_SAVE_ERRORS', true, 1);
         }
     }
 
