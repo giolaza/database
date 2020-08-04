@@ -92,13 +92,6 @@ class SqlDB
         if (!defined('engineSaveErrors')) {
             define('engineSaveErrors', true, 1);
         }
-
-        if (!function_exists('lang')) {
-            function lang($str)
-            {
-                return $str;
-            }
-        }
     }
 
     /** CONNECTION METHODS */
@@ -131,7 +124,7 @@ class SqlDB
                 if (self::DB_Driver === 'PDO') {
                     $this->connect = new PDO('mysql:host=' . $sql_host . ';dbname=' . $sql_db_name . ';charset=UTF8', $sql_user, $sql_pass, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_PERSISTENT => false));
                 } else {
-                    $this->logErr('db_open check driver: ' . lang('connection type not supported by engine'));
+                    $this->logErr('db_open check driver: connection type not supported by engine');
                     $this->connect = null;
                     return false;
                 }
@@ -141,7 +134,7 @@ class SqlDB
                 return false;
             }
         } else {
-            $this->logErr('db_open check driver: ' . lang('class not found'));
+            $this->logErr('db_open check driver: class not found');
             return false;
         }
 
@@ -154,7 +147,7 @@ class SqlDB
         } else {
             //else check connection
             if (!$this->connect) {
-                $this->logErr('db_open: ' . lang('false connection'));
+                $this->logErr('db_open: false connection');
                 return false;
             } else {
                 //if all ok
@@ -172,7 +165,7 @@ class SqlDB
         if ($this->connect != null) {
             $this->connect = null;
         } else {
-            $this->logErr('db_close: ' . lang('connect is null'));
+            $this->logErr('db_close: connect is null');
         }
     }
 
@@ -347,7 +340,7 @@ class SqlDB
 
         $key = trim($key);
         if (strlen($key) == 0) {
-            $this->logErr('do_fromArray: ' . lang('empty key detected'));
+            $this->logErr('do_fromArray: empty key detected');
             return null;
         }
 
@@ -373,7 +366,7 @@ class SqlDB
         //if not detected table name
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('do_count: ' . lang('empty table name detected'));
+            $this->logErr('do_count: empty table name detected');
             return false;
         }
 
@@ -492,12 +485,12 @@ class SqlDB
     {
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('prepareAndSelect: ' . lang('empty table detected'));
+            $this->logErr('prepareAndSelect: empty table detected');
             return null;
         }
 
         if ($this->connect == null) {
-            $this->logErr('prepareAndSelect: ' . lang('connect is null'));
+            $this->logErr('prepareAndSelect: connect is null');
             return null;
         }
 
@@ -562,20 +555,20 @@ class SqlDB
     {
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('prepareAndSave: ' . lang('empty table detected'));
+            $this->logErr('prepareAndSave: empty table detected');
             return false;
         }
 
         if (!is_array($data)) {
-            $this->logErr('prepareAndSave: ' . lang('empty array detected'));
+            $this->logErr('prepareAndSave: empty array detected');
             return false;
         } else if (count($data) == 0) {
-            $this->logErr('prepareAndSave: ' . lang('array count = 0 detected'));
+            $this->logErr('prepareAndSave: array count = 0 detected');
             return false;
         }
 
         if ($this->connect == null) {
-            $this->logErr('prepareAndSave: ' . lang('connect is null'));
+            $this->logErr('prepareAndSave: connect is null');
             return false;
         }
 
@@ -611,29 +604,29 @@ class SqlDB
     {
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('prepareAndUpdate: ' . lang('empty table detected'));
+            $this->logErr('prepareAndUpdate: empty table detected');
             return false;
         }
 
         if (!$data) {
-            $this->logErr('prepareAndUpdate: ' . lang('empty DATA detected'));
+            $this->logErr('prepareAndUpdate: empty DATA detected');
             return false;
         } elseif (!is_array($data)) {
-            $this->logErr('prepareAndUpdate: ' . lang('DATA is not array'));
+            $this->logErr('prepareAndUpdate: DATA is not array');
             return false;
         }
 
         if (!$where && !$whereNot) {
-            $this->logErr('prepareAndUpdate: ' . lang('empty WHERE detected'));
+            $this->logErr('prepareAndUpdate: empty WHERE detected');
             return false;
         } elseif (!is_array($data)) {
-            $this->logErr('prepareAndUpdate: ' . lang('WHERE is not array'));
+            $this->logErr('prepareAndUpdate: WHERE is not array');
             return false;
         }
 
 
         if ($this->connect == null) {
-            $this->logErr('prepareAndUpdate: ' . lang('connect is null'));
+            $this->logErr('prepareAndUpdate: connect is null');
             return false;
         }
 
@@ -697,20 +690,20 @@ class SqlDB
     {
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('prepareInsert: ' . lang('empty table detected'));
+            $this->logErr('prepareInsert: empty table detected');
             return null;
         }
 
         if (!is_array($array)) {
-            $this->logErr('prepareInsert: ' . lang('empty array detected'));
+            $this->logErr('prepareInsert: empty array detected');
             return null;
         } else if (count($array) == 0) {
-            $this->logErr('prepareInsert: ' . lang('array count = 0 detected'));
+            $this->logErr('prepareInsert: array count = 0 detected');
             return null;
         }
 
         if ($this->connect == null) {
-            $this->logErr('prepareInsert: ' . lang('connect is null'));
+            $this->logErr('prepareInsert: connect is null');
             return null;
         }
 
@@ -744,20 +737,20 @@ class SqlDB
     {
         $table = trim($table);
         if (strlen($table) == 0) {
-            $this->logErr('prepareUpdate: ' . lang('empty table detected'));
+            $this->logErr('prepareUpdate: empty table detected');
             return null;
         }
 
         if (!is_array($array)) {
-            $this->logErr('prepareUpdate: ' . lang('empty array detected'));
+            $this->logErr('prepareUpdate: empty array detected');
             return null;
         } else if (count($array) == 0) {
-            $this->logErr('prepareUpdate: ' . lang('array count = 0 detected'));
+            $this->logErr('prepareUpdate: array count = 0 detected');
             return null;
         }
 
         if ($this->connect == null) {
-            $this->logErr('prepareUpdate: ' . lang('connect is null'));
+            $this->logErr('prepareUpdate: connect is null');
             return null;
         }
 
@@ -792,9 +785,9 @@ class SqlDB
         $localERR = '';
         $this->query = trim($this->query);
         if (strlen($this->query) == 0) {
-            $localERR = lang('empty query detected');
+            $localERR = 'empty query detected';
         } else if ($this->connect == null) {
-            $localERR = lang('connect is null');
+            $localERR = 'connect is null';
         }
 
         if ($localERR) {
