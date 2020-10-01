@@ -52,11 +52,11 @@ class SqlDB
     public function __construct()
     {
         if (!defined('GIOLAZA_SHOW_ERRORS')) {
-            define('GIOLAZA_SHOW_ERRORS', false, 1);
+            define('GIOLAZA_SHOW_ERRORS', false);
         }
 
         if (!defined('GIOLAZA_SAVE_ERRORS')) {
-            define('GIOLAZA_SAVE_ERRORS', true, 1);
+            define('GIOLAZA_SAVE_ERRORS', true);
         }
     }
 
