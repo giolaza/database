@@ -10,9 +10,9 @@
 
 namespace GioLaza\Database;
 
+use Exception;
 use GioLaza\Database\PDOPrepared as PDOPrepared;
 use GioLaza\Logger\Log as Log;
-use \Exception;
 use PDO;
 
 /**
@@ -37,7 +37,7 @@ class SqlDB
     const LOG_FILE = 'engine.DBErrors.log';
 
     /**
-     * @var null|db connection
+     * @var null|PDO connection
      */
     public $connect = null;
 
@@ -45,9 +45,6 @@ class SqlDB
      * @var null|string
      */
     protected $query = null;
-
-
-    //public $resultCount=0;
 
     public function __construct()
     {
@@ -68,9 +65,8 @@ class SqlDB
      * @param $sql_pass
      * @param $sql_db_name
      * @return bool
-     * @throws Exception
      */
-    public function connect($sql_host, $sql_user, $sql_pass, $sql_db_name)
+    public function connect($sql_host, $sql_user, $sql_pass, $sql_db_name): bool
     {
         return $this->db_open($sql_host, $sql_user, $sql_pass, $sql_db_name);
     }
@@ -81,9 +77,8 @@ class SqlDB
      * @param $sql_pass
      * @param $sql_db_name
      * @return bool
-     * @throws Exception
      */
-    public function db_open($sql_host, $sql_user, $sql_pass, $sql_db_name)
+    public function db_open($sql_host, $sql_user, $sql_pass, $sql_db_name): bool
     {
         if (class_exists(self::DB_Driver)) {
             try {
@@ -154,9 +149,8 @@ class SqlDB
     /**
      * @param string $query
      * @return bool
-     * @throws Exception
      */
-    public function do_only($query = '')
+    public function do_only(string $query = ''): bool
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -184,9 +178,8 @@ class SqlDB
     /**
      * @param string $query
      * @return array
-     * @throws Exception
      */
-    public function do_one($query = '')
+    public function do_one(string $query = ''): array
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -215,9 +208,8 @@ class SqlDB
     /**
      * @param string $query
      * @return array
-     * @throws Exception
      */
-    public function do_all($query = '')
+    public function do_all(string $query = ''): array
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -248,9 +240,8 @@ class SqlDB
      * @param string $query
      * @param string $key
      * @return array
-     * @throws Exception
      */
-    public function do_allById($query = '', $key = 'id')
+    public function do_allById(string $query = '', string $key = 'id'): array
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -272,9 +263,8 @@ class SqlDB
     /**
      * @param string $query
      * @return bool
-     * @throws Exception
      */
-    public function do_multi($query = '')
+    public function do_multi(string $query = ''): bool
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -295,9 +285,8 @@ class SqlDB
      * @param string $query
      * @param string $key
      * @return mixed|null
-     * @throws Exception
      */
-    public function do_fromArray($query = '', $key = '')
+    public function do_fromArray(string $query = '', string $key = '')
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -323,10 +312,9 @@ class SqlDB
      * @param string $table
      * @param string $where
      * @param array $like
-     * @return bool|int
-     * @throws Exception
+     * @return false|int
      */
-    public function do_count($table = '', $where = '', $like = array())
+    public function do_count(string $table = '', string $where = '', array $like = array())
     {
 
         //if not detected table name
@@ -336,7 +324,7 @@ class SqlDB
             return false;
         }
 
-        if (!is_array($like)) $likes[] = $like;//is is string or etc.
+        if (!is_array($like)) $likes[] = $like;//is string or etc.
         else $likes = $like;
 
 
@@ -399,8 +387,7 @@ class SqlDB
     }
 
     /**
-     * @return int
-     * @throws Exception
+     * @return false|int|string
      */
     public function lastInsertId()
     {
@@ -422,8 +409,7 @@ class SqlDB
 
     /**
      * @param $query
-     * @return PDOPrepared|null
-     * @throws Exception
+     * @return \GioLaza\Database\PDOPrepared|null
      */
     public function prepare($query)
     {
@@ -432,11 +418,17 @@ class SqlDB
             return null;
         }
 
-        $PDO = new PDOPrepared;
-        $PDO->connect = $this->connect;
-        $PDO->prepare($this->query);
+        try {
+            $PDO = new PDOPrepared;
+            $PDO->connect = $this->connect;
+            $PDO->prepare($this->query);
 
-        return $PDO;
+            return $PDO;
+        } catch (Exception $e) {
+            $this->logErr($e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -445,9 +437,8 @@ class SqlDB
      * @param array $array
      * @param int $limit
      * @return array|null
-     * @throws Exception
      */
-    public function prepareAndSelect($table, $where, $array = [], $limit = 0)
+    public function prepareAndSelect($table, $where, array $array = [], int $limit = 0)
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -485,11 +476,18 @@ class SqlDB
             $this->query .= ' LIMIT ' . $limit;
         }
 
-        $PDO_prepare = new PDOPrepared;
-        $PDO_prepare->connect = $this->connect;
-        $PDO_prepare->prepare($this->query);
+        try{
+            $PDO_prepare = new PDOPrepared;
+            $PDO_prepare->connect = $this->connect;
+            $PDO_prepare->prepare($this->query);
 
-        return $PDO_prepare->execute($where);
+            return $PDO_prepare->execute($where);
+        } catch (Exception $e){
+            $this->logErr($e->getMessage());
+
+            return [];
+        }
+
     }
 
     /**
@@ -498,9 +496,8 @@ class SqlDB
      * @param array $array
      * @param int $limit
      * @return array|mixed
-     * @throws Exception
      */
-    public function prepareAndSelectOne($table, $where, $array = [], $limit = 1)
+    public function prepareAndSelectOne($table, $where, array $array = [], int $limit = 1)
     {
         $result = $this->prepareAndSelect($table, $where, $array, $limit);
 
@@ -515,9 +512,8 @@ class SqlDB
      * @param $table
      * @param $data
      * @return bool
-     * @throws Exception
      */
-    public function prepareAndInsert($table, $data)
+    public function prepareAndInsert($table, $data): bool
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -564,9 +560,8 @@ class SqlDB
      * @param array $whereNot
      * @param int $limit
      * @return bool
-     * @throws Exception
      */
-    public function prepareAndUpdate($table, $data, $where = [], $whereNot = [], $limit = 1)
+    public function prepareAndUpdate($table, $data, array $where = [], array $whereNot = [], int $limit = 1): bool
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -649,8 +644,7 @@ class SqlDB
     /**
      * @param $table
      * @param $array
-     * @return PDOPrepared|null
-     * @throws Exception
+     * @return \GioLaza\Database\PDOPrepared|null
      */
     public function prepareInsert($table, $array)
     {
@@ -696,8 +690,7 @@ class SqlDB
      * @param $table
      * @param $array
      * @param $where
-     * @return PDOPrepared|null
-     * @throws Exception
+     * @return \GioLaza\Database\PDOPrepared|null
      */
     public function prepareUpdate($table, $array, $where)
     {
@@ -744,9 +737,8 @@ class SqlDB
 
     /**
      * @return bool
-     * @throws Exception
      */
-    protected function checkAll()
+    protected function checkAll(): bool
     {
         $localERR = '';
         $this->query = trim($this->query);
@@ -797,7 +789,7 @@ class SqlDB
 
     /**
      * @param $string
-     * @throws Exception
+     * @return void
      */
     protected function logErr($string)
     {
@@ -806,9 +798,5 @@ class SqlDB
         } catch (Exception $e) {
             return;
         }
-
-        return;
     }
-
-    /*** NOT PUBLIC FUNCTIONS */
 }

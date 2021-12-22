@@ -9,7 +9,7 @@ namespace GioLaza\Database\Traits;
 trait Db
 {
     /**
-     * @var GioLaza\Database\SqlDB
+     * @var null|GioLaza\Database\SqlDB
      */
     protected $db = null;
 

@@ -1,24 +1,23 @@
 {
-    "name": "giolaza/database",
-    "type": "library",
-    "version": "1.0.6",
-    "description": "SQL DB library",
-    "authors": [
-        {
-            "name": "Giorgi Lazashvili",
-            "email": "giolaza@gmail.com"
-        }
-    ],
-    "require": {
-        "php": ">=7.0.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "GioLaza\\Database\\": ""
-        }
-    },
-    "license": "MIT",
-    "require": {
-        "giolaza/logger": "*"
+  "name": "giolaza/database",
+  "type": "library",
+  "version": "1.0.7",
+  "description": "SQL DB library",
+  "authors": [
+    {
+      "name": "Giorgi Lazashvili",
+      "email": "giolaza@gmail.com"
     }
+  ],
+  "require": {
+    "php": ">=7.0.0",
+    "giolaza/logger": "*",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "GioLaza\\Database\\": ""
+    }
+  },
+  "license": "MIT"
 }

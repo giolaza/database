@@ -25,8 +25,7 @@ class PDOPrepared extends sqlDB
 
     /**
      * @param $query
-     * @return PDOPrepared|void|null
-     * @throws \Exception
+     * @return void
      */
     public function prepare($query)
     {
@@ -46,9 +45,8 @@ class PDOPrepared extends sqlDB
     }
 
     /**
-     * @param null $array
+     * @param $array
      * @return array|null
-     * @throws \Exception
      */
     public function execute($array = null)
     {
@@ -108,9 +106,8 @@ class PDOPrepared extends sqlDB
     }
 
     /**
-     * @param null $array
+     * @param $array
      * @return array|mixed
-     * @throws \Exception
      */
     public function execute_one($array = null)
     {
@@ -121,11 +118,10 @@ class PDOPrepared extends sqlDB
     }
 
     /**
-     * @param null $array
+     * @param $array
      * @return bool
-     * @throws \Exception
      */
-    public function execute_only($array = null)
+    public function execute_only($array = null): bool
     {
         $this->result = false;
         if ($this->prepared == null) {
