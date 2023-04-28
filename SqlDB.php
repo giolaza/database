@@ -27,11 +27,6 @@ class SqlDB
     const INSERT_LIMIT = 51;
 
     /**
-     * DB driver
-     */
-    const DB_Driver = 'PDO';
-
-    /**
      * Log file name
      */
     const LOG_FILE = 'engine.DBErrors.log';
@@ -57,64 +52,60 @@ class SqlDB
         }
     }
 
-    /** CONNECTION METHODS */
-
     /**
-     * @param $sql_host
-     * @param $sql_user
-     * @param $sql_pass
-     * @param $sql_db_name
+     * @param $sqlHost
+     * @param $sqlUser
+     * @param $sqlPass
+     * @param $sqlDbName
      * @return bool
      */
-    public function connect($sql_host, $sql_user, $sql_pass, $sql_db_name): bool
+    public function connect(string $sqlHost, string $sqlUser, string $sqlPass, string $sqlDbName): bool
     {
-        return $this->db_open($sql_host, $sql_user, $sql_pass, $sql_db_name);
-    }
-
-    /**
-     * @param $sql_host
-     * @param $sql_user
-     * @param $sql_pass
-     * @param $sql_db_name
-     * @return bool
-     */
-    public function db_open($sql_host, $sql_user, $sql_pass, $sql_db_name): bool
-    {
-        if (class_exists(self::DB_Driver)) {
+        if (class_exists('PDO')) {
             try {
-                if (self::DB_Driver === 'PDO') {
-                    $this->connect = new PDO('mysql:host=' . $sql_host . ';dbname=' . $sql_db_name . ';charset=UTF8', $sql_user, $sql_pass, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_PERSISTENT => false));
-                } else {
-                    $this->logErr('db_open check driver: connection type not supported by engine');
-                    $this->connect = null;
-                    return false;
-                }
+                $this->connect = new PDO(
+                    'mysql:host=' . $sqlHost . ';dbname=' . $sqlDbName . ';charset=UTF8',
+                    $sqlUser,
+                    $sqlPass,
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_PERSISTENT => false
+                    ]
+                );
             } catch (Exception $e) {
                 $this->logErr('db_open catch: ' . $e->getMessage());
                 $this->connect = null;
+
                 return false;
             }
-        } else {
-            $this->logErr('db_open check driver: class not found');
+        }
+        else {
+            $this->logErr('connect - check driver: class not found');
+
             return false;
         }
 
-
-        //if detected error
+        // if detected error
         if (isset($this->connect->connect_errno) && $this->connect->connect_errno) {
             $this->logErr('db_open: ' . $this->connect->connect_error);
             $this->connect = null;
+
             return false;
-        } else {
-            //else check connection
-            if (!$this->connect) {
-                $this->logErr('db_open: false connection');
-                return false;
-            } else {
-                //if all ok
-                //$this->connect->setAttribute(\PDO::ATTR_EMULATE_PREPARES,false);
-                return true;
-            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $string
+     * @return void
+     */
+    protected function logErr($string)
+    {
+        try {
+            Log::logError($string, self::LOG_FILE);
+        } catch (Exception $e) {
+            return;
         }
     }
 
@@ -123,28 +114,16 @@ class SqlDB
      */
     public function db_close()
     {
-        if ($this->connect != null) {
-            $this->connect = null;
-        } else {
-            $this->logErr('db_close: connect is null');
-        }
+        $this->connect = null;
     }
 
     /**
      * @return bool
      */
-    public function check_connection()
+    public function checkConnection(): bool
     {
-        if (self::DB_Driver === 'PDO') {
-            if ($this->connect == null) return false;
-            else return true;
-        } else return false;
-
+        return $this->connect instanceof PDO;
     }
-    /*** CONNECTION METHODS */
-
-
-    /** QUERY FUNCTIONS */
 
     /**
      * @param string $query
@@ -157,7 +136,6 @@ class SqlDB
             return false;
         }
 
-
         try {
             $result = $this->connect->query($this->query);
         } catch (Exception $e) {
@@ -166,73 +144,38 @@ class SqlDB
             return false;
         }
 
-
         if ($result) {
             return true;
-        } else {
+        }
+        else {
             $this->logErr('do_only:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
             return false;
         }
     }
 
     /**
-     * @param string $query
-     * @return array
+     * @return bool
      */
-    public function do_one(string $query = ''): array
+    protected function checkAll(): bool
     {
-        $this->query = $query;
-        if (!$this->checkAll()) {
-            return array();
+        $err = '';
+        $this->query = trim($this->query);
+        if (strlen($this->query) == 0) {
+            $err = 'empty query detected';
+        }
+        else if ($this->connect == null) {
+            $err = 'connect is null';
         }
 
+        if ($err) {
+            $dbt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+            $caller = isset($dbt[1]['function']) ? $dbt[1]['function'] : '???';
 
-        try {
-            $result = $this->connect->query($this->query);
-        } catch (Exception $e) {
-            $this->logErr('do_one catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
-
-            return array();
+            $this->logErr($caller . ': ' . $err);
+            return false;
         }
-
-        if (!$result) {
-            $this->logErr('do_one:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
-            return array();
-        } else {
-            $res = $this->do_fetch($result, true);
-            if (isset($res) && is_array($res)) return $res;
-            else return array();
-        }
-    }
-
-    /**
-     * @param string $query
-     * @return array
-     */
-    public function do_all(string $query = ''): array
-    {
-        $this->query = $query;
-        if (!$this->checkAll()) {
-            return array();
-        }
-
-
-        try {
-            $result = $this->connect->query($this->query);
-        } catch (Exception $e) {
-            $this->logErr('do_all catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
-
-            return array();
-        }
-
-        if (!$result) {
-            $this->logErr('do_all:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
-
-            return array();
-        } else {
-            $res = $this->do_fetch($result);
-            if ($res) return $res;
-            else return array();
+        else {
+            return true;
         }
     }
 
@@ -243,9 +186,19 @@ class SqlDB
      */
     public function do_allById(string $query = '', string $key = 'id'): array
     {
+        return $this->do_allByKey($query, $key);
+    }
+
+    /**
+     * @param string $query
+     * @param string $key
+     * @return array
+     */
+    public function do_allByKey(string $query = '', string $key = 'id'): array
+    {
         $this->query = $query;
         if (!$this->checkAll()) {
-            return array();
+            return [];
         }
 
         $result = [];
@@ -253,11 +206,58 @@ class SqlDB
         $raw = $this->do_all($query);
 
         foreach ($raw as $row) {
-            $id = $row[$key];
-            $result[$id] = $row;
+            if (!isset($row[$key])) {
+                continue;
+            }
+
+            $result[$row[$key]] = $row;
         }
 
         return $result;
+    }
+
+
+    /**
+     * @param string $query
+     * @return array
+     */
+    public function do_all(string $query = ''): array
+    {
+        $this->query = $query;
+        if (!$this->checkAll()) {
+            return [];
+        }
+
+        try {
+            $result = $this->connect->query($this->query);
+        } catch (Exception $e) {
+            $this->logErr('do_all catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
+
+            return [];
+        }
+
+        if (!$result) {
+            $this->logErr('do_all:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
+
+            return [];
+        }
+        else {
+            return $this->doFetch($result);
+        }
+    }
+
+    /**
+     * @param $fetchData
+     * @param bool $oneOnly
+     * @return array
+     */
+    protected function doFetch($fetchData, bool $oneOnly = false): array
+    {
+        if ($fetchData != null && $fetchData->rowCount() > 0) {
+            return $oneOnly ? $fetchData->fetch(PDO::FETCH_ASSOC) : $fetchData->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
     }
 
     /**
@@ -276,7 +276,8 @@ class SqlDB
             $this->logErr('do_multi:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
 
             return false;
-        } else {
+        }
+        else {
             return true;
         }
     }
@@ -296,16 +297,40 @@ class SqlDB
         $key = trim($key);
         if (strlen($key) == 0) {
             $this->logErr('do_fromArray: empty key detected');
+
             return null;
         }
 
+        return $this->do_one($this->query)[$key] ?? null;
+    }
 
-        $result = $this->do_one($this->query);
+    /**
+     * @param string $query
+     * @return array
+     */
+    public function do_one(string $query = ''): array
+    {
+        $this->query = $query;
+        if (!$this->checkAll()) {
+            return [];
+        }
 
-        if ($result && isset($result[$key]))
-            return $result[$key];
-        else
-            return null;
+        try {
+            $result = $this->connect->query($this->query);
+        } catch (Exception $e) {
+            $this->logErr('do_one catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
+
+            return [];
+        }
+
+        if (!$result) {
+            $this->logErr('do_one:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), true));
+
+            return [];
+        }
+        else {
+            return $this->doFetch($result, true);
+        }
     }
 
     /**
@@ -316,7 +341,6 @@ class SqlDB
      */
     public function do_count(string $table = '', string $where = '', array $like = array())
     {
-
         //if not detected table name
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -341,18 +365,21 @@ class SqlDB
                         if (in_array($key, $likes)) {
                             $tmp .= ($i == 0 ? '' : ' or ') . '`' . $key . '` like :' . $key . '___' . $i;
                             $findArray[$key . '___' . $i] = '%' . $val . '%';
-                        } else {
+                        }
+                        else {
                             $tmp .= ($i == 0 ? '' : ' or ') . '`' . $key . '`=:' . $key . '___' . $i;
                             $findArray[$key . '___' . $i] = $val;
                         }
 
                     }
                     $tmp .= ')';
-                } else {
+                }
+                else {
                     if (in_array($key, $likes)) {
                         $tmp = '`' . $key . '` like :' . $key . '';
                         $findArray[$key] = '%' . $value . '%';
-                    } else {
+                    }
+                    else {
                         $tmp = '`' . $key . '`=:' . $key . '';
                         $findArray[$key] = $value;
                     }
@@ -375,7 +402,8 @@ class SqlDB
                 return 0;
 
 
-        } else {
+        }
+        else {
             $whereStr = $where;
 
             $this->query = 'SELECT count(*) c from ' . $table . ' ' . ($where ? ' WHERE ' . $whereStr : '');
@@ -387,31 +415,10 @@ class SqlDB
     }
 
     /**
-     * @return false|int|string
-     */
-    public function lastInsertId()
-    {
-        if (!$this->checkAll()) {
-            return 0;
-        }
-        try {
-            return $this->connect->lastInsertId();
-        } catch (Exception $e) {
-            $this->logErr('lastInsertId catch:<br>' . PHP_EOL . '--message: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-
-    /*** QUERY FUNCTIONS */
-
-    /** PREPARE FUNCTIONS */
-
-    /**
      * @param $query
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepare($query)
+    public function prepare(string $query)
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -428,6 +435,42 @@ class SqlDB
             $this->logErr($e->getMessage());
 
             return null;
+        }
+    }
+
+    /**
+     * @return false|int|string
+     */
+    public function lastInsertId()
+    {
+        if (!$this->checkAll()) {
+            return 0;
+        }
+        try {
+            return $this->connect->lastInsertId();
+        } catch (Exception $e) {
+            $this->logErr('lastInsertId catch:<br>' . PHP_EOL . '--message: ' . $e->getMessage());
+
+            return 0;
+        }
+    }
+
+    /**
+     * @param $table
+     * @param $where
+     * @param array $array
+     * @param int $limit
+     * @return array|mixed
+     */
+    public function prepareAndSelectOne($table, $where, array $array = [], int $limit = 1)
+    {
+        $result = $this->prepareAndSelect($table, $where, $array, $limit);
+
+        if ($result) {
+            return $result[0];
+        }
+        else {
+            return [];
         }
     }
 
@@ -458,7 +501,8 @@ class SqlDB
                 $structure[] = '`' . $key . '`';
             }
             $structureStr = implode(',', $structure);
-        } else {
+        }
+        else {
             $structureStr = '*';
         }
 
@@ -476,36 +520,18 @@ class SqlDB
             $this->query .= ' LIMIT ' . $limit;
         }
 
-        try{
+        try {
             $PDO_prepare = new PDOPrepared;
             $PDO_prepare->connect = $this->connect;
             $PDO_prepare->prepare($this->query);
 
             return $PDO_prepare->execute($where);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             $this->logErr($e->getMessage());
 
             return [];
         }
 
-    }
-
-    /**
-     * @param $table
-     * @param $where
-     * @param array $array
-     * @param int $limit
-     * @return array|mixed
-     */
-    public function prepareAndSelectOne($table, $where, array $array = [], int $limit = 1)
-    {
-        $result = $this->prepareAndSelect($table, $where, $array, $limit);
-
-        if ($result) {
-            return $result[0];
-        } else {
-            return [];
-        }
     }
 
     /**
@@ -524,7 +550,8 @@ class SqlDB
         if (!is_array($data)) {
             $this->logErr('prepareAndSave: empty array detected');
             return false;
-        } else if (count($data) == 0) {
+        }
+        else if (count($data) == 0) {
             $this->logErr('prepareAndSave: array count = 0 detected');
             return false;
         }
@@ -572,7 +599,8 @@ class SqlDB
         if (!$data) {
             $this->logErr('prepareAndUpdate: empty DATA detected');
             return false;
-        } elseif (!is_array($data)) {
+        }
+        elseif (!is_array($data)) {
             $this->logErr('prepareAndUpdate: DATA is not array');
             return false;
         }
@@ -580,7 +608,8 @@ class SqlDB
         if (!$where && !$whereNot) {
             $this->logErr('prepareAndUpdate: empty WHERE detected');
             return false;
-        } elseif (!is_array($data)) {
+        }
+        elseif (!is_array($data)) {
             $this->logErr('prepareAndUpdate: WHERE is not array');
             return false;
         }
@@ -657,7 +686,8 @@ class SqlDB
         if (!is_array($array)) {
             $this->logErr('prepareInsert: empty array detected');
             return null;
-        } else if (count($array) == 0) {
+        }
+        else if (count($array) == 0) {
             $this->logErr('prepareInsert: array count = 0 detected');
             return null;
         }
@@ -703,7 +733,8 @@ class SqlDB
         if (!is_array($array)) {
             $this->logErr('prepareUpdate: empty array detected');
             return null;
-        } else if (count($array) == 0) {
+        }
+        else if (count($array) == 0) {
             $this->logErr('prepareUpdate: array count = 0 detected');
             return null;
         }
@@ -728,75 +759,5 @@ class SqlDB
         $result->prepare($this->query);
 
         return $result;
-    }
-
-
-    /*** PREPARE FUNCTIONS */
-
-    /** NOT PUBLIC FUNCTIONS */
-
-    /**
-     * @return bool
-     */
-    protected function checkAll(): bool
-    {
-        $localERR = '';
-        $this->query = trim($this->query);
-        if (strlen($this->query) == 0) {
-            $localERR = 'empty query detected';
-        } else if ($this->connect == null) {
-            $localERR = 'connect is null';
-        }
-
-        if ($localERR) {
-            $dbt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $caller = isset($dbt[1]['function']) ? $dbt[1]['function'] : '???';
-
-            $this->logErr($caller . ': ' . $localERR);
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-
-    /**
-     * @param $fetchData
-     * @param bool $oneOnly
-     * @return array
-     */
-    protected function do_fetch($fetchData, $oneOnly = false)
-    {
-        if ($fetchData != null) {
-            //result is array
-            if ($fetchData->rowCount() > 0) {
-                $fetchDataResult = array();
-
-                if ($oneOnly) {
-                    $fetchDataResult = $fetchData->fetch(PDO::FETCH_ASSOC);
-                } else {
-                    $fetchDataResult = $fetchData->fetchAll(PDO::FETCH_ASSOC);
-                }
-
-                if (!$fetchDataResult) return array();
-
-                return $fetchDataResult;
-            } else {
-                return array();
-            }
-        } else return array();
-    }
-
-    /**
-     * @param $string
-     * @return void
-     */
-    protected function logErr($string)
-    {
-        try {
-            Log::logError($string, self::LOG_FILE);
-        } catch (Exception $e) {
-            return;
-        }
     }
 }

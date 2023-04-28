@@ -2,6 +2,9 @@
 
 namespace GioLaza\Database\Traits;
 
+use Exception;
+use GioLaza\Database\SqlDB;
+
 /**
  * Trait Db
  * @package GioLaza\Database\Traits
@@ -9,27 +12,29 @@ namespace GioLaza\Database\Traits;
 trait Db
 {
     /**
-     * @var null|GioLaza\Database\SqlDB
+     * @var null|\GioLaza\Database\SqlDB
      */
     protected $db = null;
 
     /**
      * Set DB driver in class
      *
-     * @param $DB
+     * @param \GioLaza\Database\SqlDB &$database
      */
-    public function setDB(&$DB)
+    public function setDB(SqlDB &$database)
     {
-        $this->db = $DB;
+        $this->db = $database;
     }
 
     /**
      * Check DB driver in class
+     *
+     * @throws \Exception if no DB connection found
      */
-    protected function checkDB()
+    protected function checkDB(): void
     {
-        if ($this->db === null) {
-            $this->logErr('No DB connection found');
+        if (is_null($this->db)) {
+            throw new Exception('No DB connection found');
         }
     }
 }

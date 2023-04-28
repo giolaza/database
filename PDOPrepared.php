@@ -1,177 +1,161 @@
 <?php
+
+namespace GioLaza\Database;
+
+use Exception;
+use PDOStatement;
+
 /**
- * PDOPrepared.php
+ * PDOPrepared - A class for using prepared statements with PDO
  *
  * @category   Database
  * @package    GioLaza
  * @author     Giorgi Lazashvili <giolaza@gmail.com>
- *
  */
-
-namespace GioLaza\Database;
-
-
-class PDOPrepared extends sqlDB
+class PDOPrepared extends SqlDB
 {
     /**
-     * @var null
+     * @var null The prepared statement
      */
     public $prepared = null;
 
     /**
-     * @var null
+     * @var null The query result
      */
     public $result = null;
 
     /**
-     * @param $query
+     * Prepare a query for execution
+     *
+     * @param string $query The query to prepare
+     *
      * @return void
      */
-    public function prepare($query)
+
+    /**
+     * Prepare a query for execution
+     *
+     * @param string $query The query to prepare
+     *
+     * @return void
+     */
+    public function prepare(string $query): void
     {
         $this->query = $query;
+
         try {
             $this->prepared = $this->connect->prepare($this->query);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logErr('PDO prepare catch:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . $e->getMessage());
-
             return;
         }
 
-        if (!$this->prepared) {
-            $this->logErr('PDO prepare not ready:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), 1));
+        if ($this->prepared) {
+            return;
         }
 
+        $this->logErr('PDO prepare not ready:<br>' . PHP_EOL . '--query: ' . $this->query . '<br>' . PHP_EOL . '--message: ' . print_r($this->connect->errorInfo(), 1));
     }
 
     /**
-     * @param $array
-     * @return array|null
+     * @param array|null $array
+     * @return bool
      */
-    public function execute($array = null)
+    public function execute_only(?array $array = null): bool
+    {
+        return $this->executeOnly($array);
+    }
+
+    /**
+     * Execute a prepared statement and return a boolean indicating success or failure
+     *
+     * @param array|null $array An array of values to substitute into the prepared statement
+     *
+     * @return bool Whether the prepared statement executed successfully
+     */
+    public function executeOnly(?array $array = null): bool
+    {
+        if (!$this->prepared instanceof PDOStatement) {
+            $this->logErr('executeOnly: prepared is null');
+            return false;
+        }
+
+        try {
+            $this->result = $this->prepared->execute($array);
+        } catch (Exception $e) {
+            $this->proceedPreparedError('executeOnly', $e->getMessage() . PHP_EOL . 'in ' . $e->getFile() . PHP_EOL . 'on line ' . $e->getLine(), $array);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Execute a prepared statement
+     *
+     * @param array|null $array An array of values to substitute into the prepared statement
+     *
+     * @return array|null The query result
+     */
+    public function execute(?array $array = null): ?array
     {
         $this->result = false;
-        if ($this->prepared == null) {
+
+        if (!$this->prepared instanceof PDOStatement) {
             $this->logErr('execute: prepared is null');
             return null;
         }
 
         try {
             $this->result = $this->prepared->execute($array);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $catchInfo = $e->getMessage() . '<br>' . PHP_EOL . 'in ' . $e->getFile() . '<br>' . PHP_EOL . 'on line ' . $e->getLine();
+            $this->proceedPreparedError('execute', $catchInfo, $array);
+            return [];
         }
 
         if ($this->result) {
-            $result = $this->do_fetch($this->prepared);
-        } else {
-            $result = array();
-
-            $errInfo = PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--catch Info: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= $catchInfo;
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--prepare err message: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= print_r($this->prepared->errorInfo(), true);
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            $errInfo .= '<br>--prepare array: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= print_r($array, true);
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--prepare debug: ';
-            $errInfo .= PHP_EOL;
-
-            ob_start();
-            $this->prepared->debugDumpParams();
-            $errInfo .= ob_get_contents();
-            ob_end_clean();
-
-            $this->logErr('execute: ' . $errInfo);
+            return $this->doFetch($this->prepared);
         }
+        else {
+            $this->proceedPreparedError('execute', '', $array);
+            return [];
+        }
+    }
 
-        return $result;
+    protected function proceedPreparedError(string $method, string $catchInfo, ?array $executedParams = null)
+    {
+        $separator = str_repeat('-', 20);
+        $errorInfo = "{$separator}<br>--catch Info: " . PHP_EOL . $catchInfo . PHP_EOL;
+        $errorInfo .= "{$separator}<br>--prepare err message: " . PHP_EOL . print_r($this->prepared->errorInfo(), true) . PHP_EOL;
+        $errorInfo .= "{$separator}<br>--prepare array: " . PHP_EOL . print_r($executedParams, true) . PHP_EOL;
+        $errorInfo .= "{$separator}<br>--prepare debug: " . PHP_EOL;
+        ob_start();
+        $this->prepared->debugDumpParams();
+        $errorInfo .= ob_get_clean();
+        $this->logErr($method . ': ' . $errorInfo);
     }
 
     /**
-     * @param $array
-     * @return array|mixed
+     * @param array|null $array
+     * @return array
      */
-    public function execute_one($array = null)
+    public function execute_one(?array $array = null): array
+    {
+        return $this->executeOne($array);
+    }
+
+    /**
+     * Execute a prepared statement and return the first row of the result
+     *
+     * @param array|null $array An array of values to substitute into the prepared statement
+     *
+     * @return array The first row of the query result
+     */
+    public function executeOne(?array $array = null): array
     {
         $result = $this->execute($array);
 
-        if (isset($result[0])) return $result[0];
-        else return array();
-    }
-
-    /**
-     * @param $array
-     * @return bool
-     */
-    public function execute_only($array = null): bool
-    {
-        $this->result = false;
-        if ($this->prepared == null) {
-            $this->logErr('execute: prepared is null');
-            return false;
-        }
-
-        try {
-            $this->result = $this->prepared->execute($array);
-        } catch (\Exception $e) {
-            $catchInfo = $e->getMessage() . PHP_EOL . 'in ' . $e->getFile() . PHP_EOL . 'on line ' . $e->getLine();
-        }
-
-        if ($this->result) {
-            return true;
-        } else {
-            $errInfo = PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--catch Info: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= $catchInfo;
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--prepare err message: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= print_r($this->prepared->errorInfo(), true);
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--prepare array: ';
-            $errInfo .= PHP_EOL;
-            $errInfo .= print_r($array, true);
-
-            $errInfo .= PHP_EOL . '<br>' . PHP_EOL;
-            for ($i = 0; $i < 20; $i++) $errInfo .= '-';
-            $errInfo .= PHP_EOL;
-            $errInfo .= '<br>--prepare debug: ';
-            $errInfo .= PHP_EOL;
-
-            ob_start();
-            $this->prepared->debugDumpParams();
-            $errInfo .= ob_get_contents();
-            ob_end_clean();
-
-            $this->logErr('execute_only: ' . $errInfo);
-            return false;
-        }
+        return $result[0] ?? [];
     }
 }
