@@ -418,7 +418,7 @@ class SqlDB
      * @param $query
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepare(string $query): ?\GioLaza\Database\PDOPrepared
+    public function prepare(string $query)
     {
         $this->query = $query;
         if (!$this->checkAll()) {
