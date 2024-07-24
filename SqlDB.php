@@ -53,10 +53,10 @@ class SqlDB
     }
 
     /**
-     * @param $sqlHost
-     * @param $sqlUser
-     * @param $sqlPass
-     * @param $sqlDbName
+     * @param string $sqlHost
+     * @param string $sqlUser
+     * @param string $sqlPass
+     * @param string $sqlDbName
      * @return bool
      */
     public function connect(string $sqlHost, string $sqlUser, string $sqlPass, string $sqlDbName): bool
@@ -169,7 +169,7 @@ class SqlDB
 
         if ($err) {
             $dbt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $caller = isset($dbt[1]['function']) ? $dbt[1]['function'] : '???';
+            $caller = $dbt[1]['function'] ?? '???';
 
             $this->logErr($caller . ': ' . $err);
             return false;
@@ -415,7 +415,7 @@ class SqlDB
     }
 
     /**
-     * @param $query
+     * @param string $query
      * @return \GioLaza\Database\PDOPrepared|null
      */
     public function prepare(string $query)
@@ -456,13 +456,13 @@ class SqlDB
     }
 
     /**
-     * @param $table
-     * @param $where
+     * @param string $table
+     * @param array $where
      * @param array $array
      * @param int $limit
      * @return array|mixed
      */
-    public function prepareAndSelectOne($table, $where, array $array = [], int $limit = 1)
+    public function prepareAndSelectOne(string $table, array $where, array $array = [], int $limit = 1)
     {
         $result = $this->prepareAndSelect($table, $where, $array, $limit);
 
@@ -475,13 +475,13 @@ class SqlDB
     }
 
     /**
-     * @param $table
-     * @param $where
+     * @param string $table
+     * @param array $where
      * @param array $array
      * @param int $limit
      * @return array|null
      */
-    public function prepareAndSelect($table, $where, array $array = [], int $limit = 0): ?array
+    public function prepareAndSelect(string $table, array $where, array $array = [], int $limit = 0): ?array
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -581,14 +581,14 @@ class SqlDB
     }
 
     /**
-     * @param $table
-     * @param $data
+     * @param string $table
+     * @param array $data
      * @param array $where
      * @param array $whereNot
      * @param int $limit
      * @return bool
      */
-    public function prepareAndUpdate($table, $data, array $where = [], array $whereNot = [], int $limit = 1): bool
+    public function prepareAndUpdate(string $table, array $data, array $where = [], array $whereNot = [], int $limit = 1): bool
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -600,17 +600,9 @@ class SqlDB
             $this->logErr('prepareAndUpdate: empty DATA detected');
             return false;
         }
-        elseif (!is_array($data)) {
-            $this->logErr('prepareAndUpdate: DATA is not array');
-            return false;
-        }
 
         if (!$where && !$whereNot) {
             $this->logErr('prepareAndUpdate: empty WHERE detected');
-            return false;
-        }
-        elseif (!is_array($data)) {
-            $this->logErr('prepareAndUpdate: WHERE is not array');
             return false;
         }
 
@@ -671,11 +663,11 @@ class SqlDB
     }
 
     /**
-     * @param $table
-     * @param $array
+     * @param string $table
+     * @param array $array
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepareInsert($table, $array): ?\GioLaza\Database\PDOPrepared
+    public function prepareInsert(string $table, array $array): ?\GioLaza\Database\PDOPrepared
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -683,11 +675,7 @@ class SqlDB
             return null;
         }
 
-        if (!is_array($array)) {
-            $this->logErr('prepareInsert: empty array detected');
-            return null;
-        }
-        else if (count($array) == 0) {
+        if (count($array) == 0) {
             $this->logErr('prepareInsert: array count = 0 detected');
             return null;
         }
@@ -717,12 +705,12 @@ class SqlDB
     }
 
     /**
-     * @param $table
-     * @param $array
-     * @param $where
+     * @param string $table
+     * @param array $array
+     * @param string $where
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepareUpdate($table, $array, $where): ?\GioLaza\Database\PDOPrepared
+    public function prepareUpdate(string $table, array $array, string $where): ?\GioLaza\Database\PDOPrepared
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -730,11 +718,7 @@ class SqlDB
             return null;
         }
 
-        if (!is_array($array)) {
-            $this->logErr('prepareUpdate: empty array detected');
-            return null;
-        }
-        else if (count($array) == 0) {
+        if (count($array) == 0) {
             $this->logErr('prepareUpdate: array count = 0 detected');
             return null;
         }
