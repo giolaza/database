@@ -34,12 +34,12 @@ class SqlDB
     /**
      * @var null|PDO connection
      */
-    public $connect = null;
+    public ?PDO $connect = null;
 
     /**
      * @var null|string
      */
-    protected $query = null;
+    protected ?string $query = null;
 
     public function __construct()
     {

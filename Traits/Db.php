@@ -14,7 +14,7 @@ trait Db
     /**
      * @var null|\GioLaza\Database\SqlDB
      */
-    protected $db = null;
+    protected ?SqlDB $db = null;
 
     /**
      * Set DB driver in class
