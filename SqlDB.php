@@ -337,15 +337,15 @@ class SqlDB
      * @param string $table
      * @param string $where
      * @param array $like
-     * @return false|int
+     * @return int
      */
-    public function do_count(string $table = '', string $where = '', array $like = array())
+    public function do_count(string $table = '', string $where = '', array $like = array()): int
     {
         //if not detected table name
         $table = trim($table);
         if (strlen($table) == 0) {
             $this->logErr('do_count: empty table name detected');
-            return false;
+            return 0;
         }
 
         if (!is_array($like)) $likes[] = $like;//is string or etc.
@@ -418,7 +418,7 @@ class SqlDB
      * @param $query
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepare(string $query)
+    public function prepare(string $query): ?\GioLaza\Database\PDOPrepared
     {
         $this->query = $query;
         if (!$this->checkAll()) {
@@ -481,7 +481,7 @@ class SqlDB
      * @param int $limit
      * @return array|null
      */
-    public function prepareAndSelect($table, $where, array $array = [], int $limit = 0)
+    public function prepareAndSelect($table, $where, array $array = [], int $limit = 0): ?array
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -675,7 +675,7 @@ class SqlDB
      * @param $array
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepareInsert($table, $array)
+    public function prepareInsert($table, $array): ?\GioLaza\Database\PDOPrepared
     {
         $table = trim($table);
         if (strlen($table) == 0) {
@@ -722,7 +722,7 @@ class SqlDB
      * @param $where
      * @return \GioLaza\Database\PDOPrepared|null
      */
-    public function prepareUpdate($table, $array, $where)
+    public function prepareUpdate($table, $array, $where): ?\GioLaza\Database\PDOPrepared
     {
         $table = trim($table);
         if (strlen($table) == 0) {
