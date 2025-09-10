@@ -64,7 +64,7 @@ class SqlDB
         if (class_exists('PDO')) {
             try {
                 $this->connect = new PDO(
-                    'mysql:host=' . $sqlHost . ';dbname=' . $sqlDbName . ';charset=UTF8',
+                    'mysql:host=' . $sqlHost . ';dbname=' . $sqlDbName . '',
                     $sqlUser,
                     $sqlPass,
                     [
@@ -72,6 +72,7 @@ class SqlDB
                         PDO::ATTR_PERSISTENT => false
                     ]
                 );
+                $this->connect->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'");
             } catch (Exception $e) {
                 $this->logErr('db_open catch: ' . $e->getMessage());
                 $this->connect = null;
